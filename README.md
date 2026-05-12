@@ -70,3 +70,25 @@ client->sendMessage("Payload JSON...");
 
 - Le nom des fichiers source dans ce dépôt est `carreraclient.h` et `carreraclient.cpp`.
 - Cette documentation reflète l'implémentation actuelle. Si vous souhaitez renommer la classe ou les fichiers pour une meilleure cohérence (par exemple `WebSocketClient`), dites-le moi et je peux proposer un refactoring.
+
+## Fichier .pro (exemple qmake)
+
+Voici un exemple minimal de fichier `.pro` pour construire une application console utilisant `CArreraClient` avec qmake :
+
+```qmake
+QT += core websockets network
+CONFIG += c++11 console
+CONFIG -= app_bundle
+
+TEMPLATE = app
+TARGET = CSocketClient
+
+SOURCES += csocketclient.cpp \
+           main.cpp
+
+HEADERS += csocketclient.h
+
+# Si vous avez des fichiers supplémentaires (tests, exemples), ajoutez-les ici
+```
+
+Remarque: `QT += websockets` est nécessaire pour `QWebSocket`. Selon votre version de Qt (Qt6 favorise CMake), vous pouvez préférer un `CMakeLists.txt` — dites-moi si vous voulez que je fournisse un exemple CMake pour Qt6.

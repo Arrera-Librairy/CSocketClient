@@ -1,4 +1,4 @@
-#include "carreraclient.h"
+#include "socket/csocketclient.h"
 
 CArreraClient::CArreraClient(const QString &pnameSoft, QObject *parent)
     : QObject{parent}, m_nameSoft{pnameSoft}
