@@ -1,23 +1,41 @@
-//Developpez par Enzo Bourkoua
-//Le 10.12.2024
-//Classe qui fonctionne de paire avec la classe CSocketServeur. Comme le nom l'indique C'EST UN SOCKET
+#ifndef CARRERACLIENT_H
+#define CARRERACLIENT_H
 
-#include <QTcpSocket>
 #include <QObject>
+#include <QWebSocket>
+#include <QAbstractSocket>
+#include <QUrl>
 
-class CSocketClient : public QObject {
+class CArreraClient : public QObject
+{
     Q_OBJECT
+private:
+    QWebSocket m_socketClient;
+    QString m_nameSoft;
 
 public:
-    CSocketClient(QObject *parent = nullptr);
-    void connectToHost(const QString &host, int port);
-    void sendMessage(const QString &message);
+    explicit CArreraClient(const QString &pnameSoft = "", QObject *parent = nullptr);
+    ~CArreraClient();
+
+    void connectToServeur(const QString &url);
+    bool sendMessage(const QString &message);
+    void disconnectFromServer();
+
+    bool isServerConnected() const { 
+        return m_socketClient.state() == QAbstractSocket::ConnectedState; 
+    }
+
+signals:
+    void messageReceived(const QString &message);
+    void connectionEstablished();
+    void connectionClosed();
+    void errorOccurred(const QString &errorString);
 
 private slots:
     void onConnected();
-    void onReadyRead();
     void onDisconnected();
-
-private:
-    QTcpSocket *socket;
+    void onMessageReceived(const QString &message); 
+    void onError(QAbstractSocket::SocketError error);
 };
+
+#endif // CARRERACLIENT_H

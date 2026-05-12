@@ -1,35 +1,66 @@
-//Developpez par Enzo Bourkoua
-//Le 10.12.2024
-//Classe qui fonctionne de paire avec la classe CSocketServeur. Comme le nom l'indique C'EST UN SOCKET
+#include "carreraclient.h"
 
-#include "csocketclient.h"
-#include <QDebug>
-
-CSocketClient::CSocketClient(QObject *parent) : QObject(parent) {
-    socket = new QTcpSocket(this);
-    connect(socket, &QTcpSocket::connected, this, &CSocketClient::onConnected);
-    connect(socket, &QTcpSocket::readyRead, this, &CSocketClient::onReadyRead);
-    connect(socket, &QTcpSocket::disconnected, this, &CSocketClient::onDisconnected);
+CArreraClient::CArreraClient(const QString &pnameSoft, QObject *parent)
+    : QObject{parent}, m_nameSoft{pnameSoft}
+{
+    // Connexions utilisant la syntaxe moderne (pointeurs de fonction)
+    connect(&m_socketClient, &QWebSocket::connected, this, &CArreraClient::onConnected);
+    connect(&m_socketClient, &QWebSocket::disconnected, this, &CArreraClient::onDisconnected);
+    connect(&m_socketClient, &QWebSocket::textMessageReceived, this, &CArreraClient::onMessageReceived);
+    
+    // Correction de la syntaxe d'erreur pour les versions récentes de Qt
+    connect(&m_socketClient, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error),
+            this, &CArreraClient::onError);
 }
 
-void CSocketClient::connectToHost(const QString &host, int port) {
-    socket->connectToHost(host, port);
-}
-
-void CSocketClient::sendMessage(const QString &message) {
-    if (socket->state() == QAbstractSocket::ConnectedState) {
-        socket->write(message.toUtf8());
+CArreraClient::~CArreraClient()
+{
+    if (isServerConnected()) {
+        m_socketClient.close();
     }
 }
 
-void CSocketClient::onConnected() {
-    qDebug() << "Client connected";
+void CArreraClient::connectToServeur(const QString &url)
+{
+    m_socketClient.open(QUrl(url));
 }
 
-void CSocketClient::onReadyRead() {
-    qDebug() << "Client received:" << socket->readAll();
+void CArreraClient::disconnectFromServer()
+{
+    m_socketClient.close();
 }
 
-void CSocketClient::onDisconnected() {
-    qDebug() << "Client disconnected";
+bool CArreraClient::sendMessage(const QString &message)
+{
+    if (!isServerConnected()) {
+        return false;
+    }
+    m_socketClient.sendTextMessage(message);
+    return true;
+}
+
+void CArreraClient::onConnected()
+{
+    m_socketClient.sendTextMessage(QString("namesoft %1\n").arg(m_nameSoft));
+    emit connectionEstablished();
+}
+
+void CArreraClient::onDisconnected()
+{
+    emit connectionClosed();
+}
+
+void CArreraClient::onMessageReceived(const QString &message)
+{
+    emit messageReceived(message);
+
+    if (message != "Message Received" && !message.isEmpty()) {
+        m_socketClient.sendTextMessage("Message Received");
+    }
+}
+
+void CArreraClient::onError(QAbstractSocket::SocketError error)
+{
+    QString errorInfo = m_socketClient.errorString();
+    emit errorOccurred(errorInfo);
 }
